@@ -1,0 +1,25 @@
+Source,/Users/aturner/GIT/espdsc/kicad/espdsc.sch
+Kicad Rev,Eeschema 4.0.5
+Generated Date,Sunday, February 26, 2017 'PMt' 03:40:56 PM
+
+Title,Not Set
+Company,Aaron Turner <synfinatic@gmail.com>
+Revision,v0.1
+Date Issue,2017-02-25
+Comment,https://synfin.net/XXXX
+
+Reference,Value,Description,Availability,Package,MP,Price,Library,Library Ref
+U1,ESP-12E,ESP8266,ESP-12E
+J1,RJ45,conn,RJ45
+P1,USB_B,conn,USB_B
+CONN1,FTDI,synfinatic,FTDI
+SW2,Prog,switches,SW_SPST
+SW1,Reset,switches,SW_SPST
+R4,1k,device,R
+R3,1k,device,R
+U3,TXB0104,4-Bit Bidirectional Voltage-Level Translator with Auto Direction Sensing and +/-15 kV ESD Protect,Unavailable,None,TXB0104,None,synfinatic,TXB0104
+C1,1uf,device,C
+C2,4.7uF,device,C
+C3,1uF,device,C
+U2,MCP1825S-3302E/DB,MCP1825,,SOT-223-3 Microchip,,,synfinatic,MCP1825S-3302E/DB
+JP1,Jumper_NO_Small,device,Jumper_NO_Small
