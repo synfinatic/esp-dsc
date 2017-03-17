@@ -1,12 +1,11 @@
-# Digital Setting Circles for ESP-12E/F
+# ESP-DSC: Digital Setting Circles for ESP-12E/F
 
 ## About
 
 Low cost alternative to my original Digital Setting Circles project the
 [Teensy-DSC](https://github.com/synfinatic/teensy-dsc/).  This new design
-uses the cheap ESP-12E/F WiFi enabled microcontroller which saves about
-$50.  I've also removed the +12V barrel plug which saves another $5 or so.
-The result is a smaller, less expensive design.
+uses the cheap ESP-12E/F WiFi enabled microcontroller which saves about 60% 
+of the original price (~$40 vs ~$100).
 
 I'm also planing to include the necessary .STL files so you can 3D print
 the appropriate enclosure for the board.
