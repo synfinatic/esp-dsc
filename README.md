@@ -31,6 +31,17 @@ The main goals were:
     * PCB's available from [OshPark](http://www.oshpark.com)
  * Inexpensive!  All the components should be available for < $40.
 
+## Programming
+You will need the Arduino 1.8.1+ IDE.   You will need to add support for the 
+ESP8266 by [following the directions here](https://github.com/esp8266/Arduino).
+
+Under the tools menu, configure your board as follows:
+ * Board: NodeMCU 1.0 (ESP-12E Module)
+ * Flash Mode: DIO
+ * Flash Size: 4M (3M SPIFFS)
+ * CPU Frequency: 80Mhz
+ * Upload Speed: 115200 Baud
+
 ## Similar Projects
 There are a bunch of similar projects to TeensyDSC which you should be aware of:
  * [TeensyDSC](https://github.com/synfinatic/teensy-dsc/)
