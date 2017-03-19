@@ -45,6 +45,7 @@ setup() {
     pinMode(CHAN_DEC_A, INPUT_PULLUP);
     pinMode(CHAN_DEC_B, INPUT_PULLUP);
 
+    Serial.println("Starting up WiFi...");
 #ifdef AP_MODE
     WiFi.disconnect(true);
     WiFi.mode(WIFI_AP_STA);
@@ -60,6 +61,8 @@ setup() {
         Serial.println(WIFI_AP);
         while(1)
             delay(500);
+    } else {
+        Serial.println("Connected!");
     }
 #endif
 
@@ -215,15 +218,12 @@ loop()
     if ((now - last) >= SERIAL_PRINT_DELAY) {
         last = now;
 
-        Serial.print("RA Encoder Ticks: ");
-        Serial.print(ngc_convert_encoder_value(_RAEncoderTicks, RA_Res));
-        Serial.print("  Revolutions: ");
-        Serial.print(_RAEncoderTicks/RA_Res);
-        Serial.print("\n");
-        Serial.print("DEC Encoder Ticks: ");
-        Serial.print(ngc_convert_encoder_value(_DECEncoderTicks, DEC_Res));
-        Serial.print("  Revolutions: ");
-        Serial.print(_DECEncoderTicks/DEC_Res);
+        Serial.printf("RA Encoder Ticks: %ld  Revolutions: ",
+            ngc_convert_encoder_value(_RAEncoderTicks, RA_Res));
+        Serial.print(_RAEncoderTicks/(float)RA_Res);
+        Serial.printf("\nDEC Encoder Ticks: %ld  Revolutions: ",
+            ngc_convert_encoder_value(_DECEncoderTicks, DEC_Res));
+        Serial.print(_DECEncoderTicks/(float)DEC_Res);
         Serial.print("\n");
     }
 #endif

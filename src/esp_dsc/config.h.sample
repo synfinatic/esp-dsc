@@ -11,10 +11,9 @@
 
 /*
  * Resolution of encoders after quadrature decoding
- * must be a float!
  */
-#define RA_RESOLUTION 10000.0
-#define DEC_RESOLUTION 10000.0
+#define RA_RESOLUTION 10000
+#define DEC_RESOLUTION 10000
 
 /*
  * TCP Port to listen on for SkySafari/etc
