@@ -27,10 +27,10 @@
 #include "dsc.h"
 #include "utils.h"
 
-void HandleChanRA();
-void HandleChanDEC();
-int ParseEncoderRA();
-int ParseEncoderDEC();
+void HandleChanRA_A();
+void HandleChanRA_B();
+void HandleChanDEC_A();
+void HandleChanDEC_B();
 
 WiFiServer server(TCP_PORT);
 WiFiClient serverClients[MAX_SRV_CLIENTS];
@@ -73,29 +73,31 @@ setup() {
     Serial.print(":");
     Serial.println(TCP_PORT);
 
-    attachInterrupt(CHAN_RA_A, HandleChanRA, CHANGE);
-    attachInterrupt(CHAN_RA_B, HandleChanRA, CHANGE);
-    attachInterrupt(CHAN_DEC_A, HandleChanDEC, CHANGE);
-    attachInterrupt(CHAN_DEC_B, HandleChanDEC, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(CHAN_RA_A), HandleChanRA_A, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(CHAN_RA_B), HandleChanRA_B, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(CHAN_DEC_A), HandleChanDEC_A, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(CHAN_DEC_B), HandleChanDEC_B, CHANGE);
 }
 
 
 
-// Quadrature encoders
-// Left encoder
 #define EncoderIsReversed
 
 volatile bool _RAEncoderASet;
 volatile bool _RAEncoderBSet;
-volatile bool _RAEncoderAPrev;
-volatile bool _RAEncoderBPrev;
 volatile long _RAEncoderTicks = 0;
-
 volatile bool _DECEncoderASet;
 volatile bool _DECEncoderBSet;
+volatile long _DECEncoderTicks = 0;
+
+#ifdef DEBUG
+volatile bool _RAEncoderAPrev;
+volatile bool _RAEncoderBPrev;
 volatile bool _DECEncoderAPrev;
 volatile bool _DECEncoderBPrev;
-volatile long _DECEncoderTicks = 0;
+volatile int _RAMissedInterrupt = 0;
+volatile int _DECMissedInterrupt = 0;
+#endif 
 
 long RA_Res = RA_RESOLUTION;
 long DEC_Res = DEC_RESOLUTION;
@@ -225,66 +227,119 @@ loop()
             ngc_convert_encoder_value(_DECEncoderTicks, DEC_Res));
         Serial.print(_DECEncoderTicks/(float)DEC_Res);
         Serial.print("\n");
+
+        if (_DECMissedInterrupt > 0) {
+            Serial.printf("Missed %d interrupts on DEC\n", _DECMissedInterrupt);
+            _DECMissedInterrupt = 0;
+        }
+        if (_RAMissedInterrupt > 0) {
+            Serial.printf("Missed %d interrupts on DEC\n", _RAMissedInterrupt);
+            _RAMissedInterrupt = 0;
+        }
     }
 #endif
 }
 
 
-// Interrupt service routines for the left motor's quadrature encoder
+// Interrupt service routine for the RA/Az A channel
 void 
-HandleChanRA() {
+HandleChanRA_A() {
     _RAEncoderASet = digitalRead(CHAN_RA_A);
+
+    if (_RAEncoderBSet) {
+        if (_RAEncoderASet) {
+            _RAEncoderTicks += -1;
+        } else {
+            _RAEncoderTicks += 1;
+        }
+    } else {
+        if (_RAEncoderASet) {
+            _RAEncoderTicks += 1;
+        } else {
+            _RAEncoderTicks += -1;
+        }
+    }
+#ifdef DEBUG
+    if (_RAEncoderAPrev == _RAEncoderASet) {
+        _RAMissedInterrupt += 1;
+    }
+    _RAEncoderAPrev = _RAEncoderASet;
+#endif
+}
+
+void
+HandleChanRA_B() {
     _RAEncoderBSet = digitalRead(CHAN_RA_B);
 
-    _RAEncoderTicks += ParseEncoderRA();
-
-    _RAEncoderAPrev = _RAEncoderASet;
+    if (_RAEncoderASet) {
+        if (_RAEncoderBSet) {
+            _RAEncoderTicks += 1;
+        } else {
+            _RAEncoderTicks += -1;
+        }
+    } else {
+        if (_RAEncoderBSet) {
+            _RAEncoderTicks += -1;
+        } else {
+            _RAEncoderTicks += 1;
+        }
+    }
+#ifdef DEBUG
+    if (_RAEncoderBPrev == _RAEncoderBSet) {
+        _RAMissedInterrupt += 1;
+    }
     _RAEncoderBPrev = _RAEncoderBSet;
+#endif
 }
 
-// Interrupt service routines for the right motor's quadrature encoder
+
+// Interrupt service routine for the DEC/Az A channel
 void 
-HandleChanDEC() {
-    // Test transition;
+HandleChanDEC_A() {
     _DECEncoderASet = digitalRead(CHAN_DEC_A);
+
+    if (_DECEncoderBSet) {
+        if (_DECEncoderASet) {
+            _DECEncoderTicks += -1;
+        } else {
+            _DECEncoderTicks += 1;
+        }
+    } else {
+        if (_DECEncoderASet) {
+            _DECEncoderTicks += 1;
+        } else {
+            _DECEncoderTicks += -1;
+        }
+    }
+#ifdef DEBUG
+    if (_DECEncoderAPrev == _DECEncoderASet) {
+        _DECMissedInterrupt += 1;
+    }
+    _DECEncoderAPrev = _DECEncoderASet;
+#endif
+}
+
+void
+HandleChanDEC_B() {
     _DECEncoderBSet = digitalRead(CHAN_DEC_B);
 
-    _DECEncoderTicks += ParseEncoderDEC();
-
-    _DECEncoderAPrev = _DECEncoderASet;
+    if (_DECEncoderASet) {
+        if (_DECEncoderBSet) {
+            _DECEncoderTicks += 1;
+        } else {
+            _DECEncoderTicks += -1;
+        }
+    } else {
+        if (_DECEncoderBSet) {
+            _DECEncoderTicks += -1;
+        } else {
+            _DECEncoderTicks += 1;
+        }
+    }
+#ifdef DEBUG
+    if (_DECEncoderBPrev == _DECEncoderBSet) {
+        _DECMissedInterrupt += 1;
+    }
     _DECEncoderBPrev = _DECEncoderBSet;
-}
-
-int 
-ParseEncoderRA() {
-    if (_RAEncoderAPrev && _RAEncoderBPrev) {
-        if (!_RAEncoderASet && _RAEncoderBSet) return 1;
-        if (_RAEncoderASet && !_RAEncoderBSet) return -1;
-    } else if (!_RAEncoderAPrev && _RAEncoderBPrev) {
-        if (!_RAEncoderASet && !_RAEncoderBSet) return 1;
-        if (_RAEncoderASet && _RAEncoderBSet) return -1;
-    } else if (!_RAEncoderAPrev && !_RAEncoderBPrev) {
-        if (_RAEncoderASet && !_RAEncoderBSet) return 1;
-        if (!_RAEncoderASet && _RAEncoderBSet) return -1;
-    } else if (_RAEncoderAPrev && !_RAEncoderBPrev) {
-        if (_RAEncoderASet && _RAEncoderBSet) return 1;
-        if (!_RAEncoderASet && !_RAEncoderBSet) return -1;
-    }
-}
-
-int 
-ParseEncoderDEC() {
-    if (_DECEncoderAPrev && _DECEncoderBPrev) {
-        if (!_DECEncoderASet && _DECEncoderBSet) return 1;
-        if (_DECEncoderASet && !_DECEncoderBSet) return -1;
-    } else if (!_DECEncoderAPrev && _DECEncoderBPrev) {
-        if (!_DECEncoderASet && !_DECEncoderBSet) return 1;
-        if (_DECEncoderASet && _DECEncoderBSet) return -1;
-    } else if (!_DECEncoderAPrev && !_DECEncoderBPrev) {
-        if (_DECEncoderASet && !_DECEncoderBSet) return 1;
-        if (!_DECEncoderASet && _DECEncoderBSet) return -1;
-    } else if (_DECEncoderAPrev && !_DECEncoderBPrev) {
-        if (_DECEncoderASet && _DECEncoderBSet) return 1;
-        if (!_DECEncoderASet && !_DECEncoderBSet) return -1;
-    }
+#endif
 }

@@ -12,12 +12,12 @@
  */
 
 /* Encoder pins on RJ45 */
-#define CHAN_RA_A   2     // RJ45 pin 3
-#define CHAN_RA_B  15     // RJ45 pin 1
-#define CHAN_DEC_A  5     // RJ45 pin 7
-#define CHAN_DEC_B  4     // RJ45 pin 5
+#define CHAN_DEC_A   2     // RJ45 pin 3
+#define CHAN_DEC_B  15     // RJ45 pin 1
+#define CHAN_RA_A    5     // RJ45 pin 7
+#define CHAN_RA_B    4     // RJ45 pin 5
 
-#define ESP_DSC_VERSION "0.0.1"
+#define ESP_DSC_VERSION "0.0.2"
 #define MAX_SRV_CLIENTS 4
 #define MAX_AP_RETRIES 60
 #define SERIAL_SPEED 115200
