@@ -42,6 +42,15 @@ Under the tools menu, configure your board as follows:
  * CPU Frequency: 80Mhz
  * Upload Speed: 115200 Baud
 
+Do the following *exactly*:
+
+ 1. Disconnect the ESP-DSC from the encoders
+ 1. Press Reset button
+ 1. Press Program button
+ 1. Release Reset button
+ 1. Release Program button
+ 1. Press the Upload button in the Arduino IDE
+
 ## Similar Projects
 There are a bunch of similar projects to TeensyDSC which you should be aware of:
  * [TeensyDSC](https://github.com/synfinatic/teensy-dsc/)

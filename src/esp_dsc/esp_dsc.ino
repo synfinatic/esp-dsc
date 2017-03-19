@@ -21,22 +21,55 @@
  */
 
 #include <Arduino.h>
-// #include <Flash.h>
+#include <ESP8266WiFi.h>
+#include <WiFiClient.h>
 #include "esp_dsc.h"
-
+#include "dsc.h"
+#include "utils.h"
 
 void HandleChanRA();
 void HandleChanDEC();
 int ParseEncoderRA();
 int ParseEncoderDEC();
 
+WiFiServer server(TCP_PORT);
+WiFiClient serverClients[MAX_SRV_CLIENTS];
+
 void
 setup() {
+    uint8_t i = 0;
     Serial.begin(SERIAL_SPEED);
+
     pinMode(CHAN_RA_A, INPUT_PULLUP);
     pinMode(CHAN_RA_B, INPUT_PULLUP);
     pinMode(CHAN_DEC_A, INPUT_PULLUP);
     pinMode(CHAN_DEC_B, INPUT_PULLUP);
+
+#ifdef AP_MODE
+    WiFi.disconnect(true);
+    WiFi.mode(WIFI_AP_STA);
+    WiFi.softAP(WIFI_SSID, WIFI_PASSWORD);
+#else
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    while (WiFi.status() != WL_CONNECTED && i++ < MAX_AP_RETRIES) {
+        Serial.print("Waiting for WiFi status to go live...\n");
+        delay(500);
+    }
+    if (i > MAX_AP_RETRIES) {
+        Serial.print("Could not connect to ");
+        Serial.println(WIFI_AP);
+        while(1)
+            delay(500);
+    }
+#endif
+
+    server.begin();
+    server.setNoDelay(true);
+    Serial.print("Connect to ");
+    Serial.print(WiFi.localIP());
+    Serial.print(":");
+    Serial.println(TCP_PORT);
+
     attachInterrupt(CHAN_RA_A, HandleChanRA, CHANGE);
     attachInterrupt(CHAN_RA_B, HandleChanRA, CHANGE);
     attachInterrupt(CHAN_DEC_A, HandleChanDEC, CHANGE);
@@ -61,20 +94,75 @@ volatile bool _DECEncoderAPrev;
 volatile bool _DECEncoderBPrev;
 volatile long _DECEncoderTicks = 0;
 
+void
+process_client(uint8_t c) {
+    char buff[36];
+    char *value;
+    char val = serverClients[c].read();
+    if (val == 'Q') {
+        value = EncoderValue(
+                ngc_convert_encoder_value(_RAEncoderTicks, RA_RESOLUTION), true);
+        sprintf(buff, "%s\t", value);
+        value = EncoderValue(
+                ngc_convert_encoder_value(_DECEncoderTicks, DEC_RESOLUTION), true);
+        strcat(buff, value);
+        strcat(buff, "\r\n");
+        serverClients[c].print(buff);
+        Serial.print("Received query from ");
+        Serial.println(c);
+    } else {
+        Serial.print("Unknown request: ");
+        Serial.println(val);
+    }
+}
+
 void 
 loop()
 { 
-    Serial.print("RA Encoder Ticks: ");
-    Serial.print(_RAEncoderTicks);
-    Serial.print("  Revolutions: ");
-    Serial.print(_RAEncoderTicks/RA_RESOLUTION);
-    Serial.print("\n");
-    Serial.print("DEC Encoder Ticks: ");
-    Serial.print(_DECEncoderTicks);
-    Serial.print("  Revolutions: ");
-    Serial.print(_DECEncoderTicks/DEC_RESOLUTION);
-    Serial.print("\n");
-    delay(100);
+    static unsigned long last = 0;
+    unsigned long now = millis();
+    uint8_t c;
+
+    // look for new clients
+    if (server.hasClient()) {
+        for (c = 0; c < MAX_SRV_CLIENTS; c++) {
+            // find a free slot
+            if (!serverClients[c] || !serverClients[c].connected()) {
+                if (serverClients[c]) 
+                    serverClients[c].stop();
+                serverClients[c] = server.available();
+                continue;
+            }
+        }
+        
+        // no free slots to reject
+        WiFiClient serverClient = server.available();
+        serverClient.stop();
+    }
+
+    // check clients for data
+    for (c = 0; c < MAX_SRV_CLIENTS; c++) {
+        if (serverClients[c] && serverClients[c].connected()) {
+            if (serverClients[c].available()) {
+                process_client(c);
+            }
+        }
+    }
+
+    if ((now - last) >= SERIAL_PRINT_DELAY) {
+        last = now;
+
+        Serial.print("RA Encoder Ticks: ");
+        Serial.print(ngc_convert_encoder_value(_RAEncoderTicks, RA_RESOLUTION));
+        Serial.print("  Revolutions: ");
+        Serial.print(_RAEncoderTicks/RA_RESOLUTION);
+        Serial.print("\n");
+        Serial.print("DEC Encoder Ticks: ");
+        Serial.print(ngc_convert_encoder_value(_DECEncoderTicks, DEC_RESOLUTION));
+        Serial.print("  Revolutions: ");
+        Serial.print(_DECEncoderTicks/DEC_RESOLUTION);
+        Serial.print("\n");
+    }
 }
 
 
