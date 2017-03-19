@@ -1,0 +1,34 @@
+/* 
+ * Copy this file to config.h and then edit to taste.
+ * config.h will never be committed to GIT for security purposes
+ */
+
+#ifndef __CONFIG_H__
+#define __CONFIG_H__
+
+// #define DEBUG 1 // Enable for debugging via serial
+// #define AP_MODE 1 // Comment out this to connect to an existing WiFi network
+
+/*
+ * Resolution of encoders after quadrature decoding
+ * must be a float!
+ */
+#define RA_RESOLUTION 10000.0
+#define DEC_RESOLUTION 10000.0
+
+/*
+ * TCP Port to listen on for SkySafari/etc
+ */
+#define TCP_PORT 4030
+
+#ifdef AP_MODE
+// Set these values if you wish to create a new WiFi network
+#define WIFI_SSID "ESP-DSC"
+#define WIFI_PASSWORD "12345678" // change this to something more secure
+#else
+// Set these values if you wish to connect to an existing WiFi network
+#define WIFI_SSID "MyWiFiNetwork"
+#define WIFI_PASSWORD "*********"
+#endif
+
+#endif

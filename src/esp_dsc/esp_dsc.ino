@@ -94,25 +94,88 @@ volatile bool _DECEncoderAPrev;
 volatile bool _DECEncoderBPrev;
 volatile long _DECEncoderTicks = 0;
 
+long RA_Res = RA_RESOLUTION;
+long DEC_Res = DEC_RESOLUTION;
+
 void
 process_client(uint8_t c) {
-    char buff[36];
+    char buff[CLIENT_BUFF_LEN];
     char *value;
     char val = serverClients[c].read();
-    if (val == 'Q') {
-        value = EncoderValue(
-                ngc_convert_encoder_value(_RAEncoderTicks, RA_RESOLUTION), true);
-        sprintf(buff, "%s\t", value);
-        value = EncoderValue(
-                ngc_convert_encoder_value(_DECEncoderTicks, DEC_RESOLUTION), true);
-        strcat(buff, value);
-        strcat(buff, "\r\n");
-        serverClients[c].print(buff);
-        Serial.print("Received query from ");
-        Serial.println(c);
-    } else {
-        Serial.print("Unknown request: ");
-        Serial.println(val);
+    long ra, dec;
+    int i, j;
+    switch (val) {
+        // get encoder values
+        case 'Q':
+            value = EncoderValue(
+                    ngc_convert_encoder_value(_RAEncoderTicks, RA_Res), true);
+            sprintf(buff, "%s\t", value);
+            value = EncoderValue(
+                    ngc_convert_encoder_value(_DECEncoderTicks, DEC_Res), true);
+            serverClients[c].printf("%s%s\r\n", buff, value);
+            break;
+        case 'R':
+            // set resolution
+            memset(buff, '\0', CLIENT_BUFF_LEN);
+            i = 0;
+            j = 0;
+            // Horrible hack around ESP8266 not having sscanf()
+            if (serverClients[c].available()) {
+                serverClients[c].read(); // read the space
+            } else {
+                Serial.printf("short command!\n");
+                return;
+            }
+
+            while (i < 2) {
+                while (serverClients[c].available() && serverClients[c].peek() != ' ') {
+                    if (serverClients[c].peek() != ' ') {
+                        buff[j] = serverClients[c].read();
+                        j++;
+                    }
+                }
+                if (i == 0) {
+                    j = 0;
+                    ra = String(buff).toInt();
+                    Serial.printf("RA = %ld\n", RA_Res);
+                    memset(buff, '\0', CLIENT_BUFF_LEN);
+                    serverClients[c].read(); // read the space
+                } else {
+                    dec = String(buff).toInt();
+                    Serial.printf("DEC = %ld\n", DEC_Res);
+                }
+                i++;
+            }
+            if (i != 2) {
+                Serial.printf("Unable to process: R %s\n", buff);
+                return;
+            }
+            RA_Res = ra;
+            DEC_Res = dec;
+            break;
+        case 'G':
+        case 'H':
+            // get resolution
+            long ra, dec;
+            char ra_pos[2], dec_pos[2];
+
+            ra = abs(RA_Res);
+            dec = abs(DEC_Res);
+
+            ra_pos[1] = dec_pos[1] = '\0';
+            ra_pos[0] = ra == RA_Res ? '+' : '-';
+            dec_pos[0] = dec == DEC_Res ? '+' : '-';
+
+            Serial.printf("%s%05ld\t%s%05ld\r\n", ra_pos, RA_Res, dec_pos, dec); 
+            serverClients[c].printf("%s%05ld\t%s%05ld\r\n", ra_pos, RA_Res, dec_pos, dec); 
+            break; 
+        case 'V':
+        case 'v':
+            // get version
+            serverClients[c].printf("ESP-DSC v%s\n", ESP_DSC_VERSION);
+            break;
+        default:
+            Serial.printf("Unknown command: %c\n", val);
     }
 }
 
@@ -148,21 +211,22 @@ loop()
             }
         }
     }
-
+#ifdef DEBUG
     if ((now - last) >= SERIAL_PRINT_DELAY) {
         last = now;
 
         Serial.print("RA Encoder Ticks: ");
-        Serial.print(ngc_convert_encoder_value(_RAEncoderTicks, RA_RESOLUTION));
+        Serial.print(ngc_convert_encoder_value(_RAEncoderTicks, RA_Res));
         Serial.print("  Revolutions: ");
-        Serial.print(_RAEncoderTicks/RA_RESOLUTION);
+        Serial.print(_RAEncoderTicks/RA_Res);
         Serial.print("\n");
         Serial.print("DEC Encoder Ticks: ");
-        Serial.print(ngc_convert_encoder_value(_DECEncoderTicks, DEC_RESOLUTION));
+        Serial.print(ngc_convert_encoder_value(_DECEncoderTicks, DEC_Res));
         Serial.print("  Revolutions: ");
-        Serial.print(_DECEncoderTicks/DEC_RESOLUTION);
+        Serial.print(_DECEncoderTicks/DEC_Res);
         Serial.print("\n");
     }
+#endif
 }
 
 
