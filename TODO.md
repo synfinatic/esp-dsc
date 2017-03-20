@@ -14,6 +14,10 @@
     - Hard to find! (not Digikey/Newark/etc)
     - http://www.usdigital.com/products/interfaces/ics/LFLS7366R-S
     - http://www.omnipro.net/lsi-csi/LS7366R-S
+    - http://www.anaheimautomation.com/products/ics/lsi-csi-item.php?sID=270&serID=17&pt=i&tID=159&cID=55
+    - Notes:
+        - http://www.micromouseonline.com/2008/02/21/ls7366-quadrature-counter/
+        - http://hades.mech.northwestern.edu/index.php/Using_the_LS7366R_SPI_Quadrature_Counter
 
 # Software
  - Fix interrupt handler to not miss clicks

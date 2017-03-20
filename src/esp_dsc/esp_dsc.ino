@@ -34,6 +34,26 @@ void HandleChanDEC_B();
 
 WiFiServer server(TCP_PORT);
 WiFiClient serverClients[MAX_SRV_CLIENTS];
+long RA_Res = RA_RESOLUTION;
+long DEC_Res = DEC_RESOLUTION;
+
+volatile bool _RAEncoderASet;
+volatile bool _RAEncoderBSet;
+volatile long _RAEncoderTicks = 0;
+volatile bool _DECEncoderASet;
+volatile bool _DECEncoderBSet;
+volatile long _DECEncoderTicks = 0;
+
+#ifdef DEBUG
+volatile bool _RAEncoderAPrev;
+volatile bool _RAEncoderBPrev;
+volatile bool _DECEncoderAPrev;
+volatile bool _DECEncoderBPrev;
+volatile int _RAMissedInterrupt = 0;
+volatile int _DECMissedInterrupt = 0;
+#endif 
+
+
 
 void
 setup() {
@@ -73,6 +93,10 @@ setup() {
     Serial.print(":");
     Serial.println(TCP_PORT);
 
+    _RAEncoderASet = digitalRead(CHAN_RA_A);
+    _RAEncoderBSet = digitalRead(CHAN_RA_B);
+    _DECEncoderASet = digitalRead(CHAN_DEC_A);
+    _DECEncoderBSet = digitalRead(CHAN_DEC_B);
     attachInterrupt(digitalPinToInterrupt(CHAN_RA_A), HandleChanRA_A, CHANGE);
     attachInterrupt(digitalPinToInterrupt(CHAN_RA_B), HandleChanRA_B, CHANGE);
     attachInterrupt(digitalPinToInterrupt(CHAN_DEC_A), HandleChanDEC_A, CHANGE);
@@ -80,28 +104,9 @@ setup() {
 }
 
 
-
-#define EncoderIsReversed
-
-volatile bool _RAEncoderASet;
-volatile bool _RAEncoderBSet;
-volatile long _RAEncoderTicks = 0;
-volatile bool _DECEncoderASet;
-volatile bool _DECEncoderBSet;
-volatile long _DECEncoderTicks = 0;
-
-#ifdef DEBUG
-volatile bool _RAEncoderAPrev;
-volatile bool _RAEncoderBPrev;
-volatile bool _DECEncoderAPrev;
-volatile bool _DECEncoderBPrev;
-volatile int _RAMissedInterrupt = 0;
-volatile int _DECMissedInterrupt = 0;
-#endif 
-
-long RA_Res = RA_RESOLUTION;
-long DEC_Res = DEC_RESOLUTION;
-
+/*
+ * Process TCP client request on the given serverClient entry
+ */
 void
 process_client(uint8_t c) {
     char buff[CLIENT_BUFF_LEN];
@@ -240,11 +245,11 @@ loop()
 #endif
 }
 
-
 // Interrupt service routine for the RA/Az A channel
 void 
 HandleChanRA_A() {
-    _RAEncoderASet = digitalRead(CHAN_RA_A);
+//    _RAEncoderASet = digitalRead(CHAN_RA_A);
+    _RAEncoderASet = !_RAEncoderASet;
 
     if (_RAEncoderBSet) {
         if (_RAEncoderASet) {
@@ -259,7 +264,7 @@ HandleChanRA_A() {
             _RAEncoderTicks += -1;
         }
     }
-#ifdef DEBUG
+#ifdef FOO
     if (_RAEncoderAPrev == _RAEncoderASet) {
         _RAMissedInterrupt += 1;
     }
@@ -269,7 +274,8 @@ HandleChanRA_A() {
 
 void
 HandleChanRA_B() {
-    _RAEncoderBSet = digitalRead(CHAN_RA_B);
+//    _RAEncoderBSet = digitalRead(CHAN_RA_B);
+    _RAEncoderBSet = !_RAEncoderBSet;
 
     if (_RAEncoderASet) {
         if (_RAEncoderBSet) {
@@ -284,7 +290,7 @@ HandleChanRA_B() {
             _RAEncoderTicks += 1;
         }
     }
-#ifdef DEBUG
+#ifdef FOO
     if (_RAEncoderBPrev == _RAEncoderBSet) {
         _RAMissedInterrupt += 1;
     }
@@ -292,11 +298,11 @@ HandleChanRA_B() {
 #endif
 }
 
-
 // Interrupt service routine for the DEC/Az A channel
 void 
 HandleChanDEC_A() {
-    _DECEncoderASet = digitalRead(CHAN_DEC_A);
+    // _DECEncoderASet = digitalRead(CHAN_DEC_A);
+    _DECEncoderASet = !_DECEncoderASet;
 
     if (_DECEncoderBSet) {
         if (_DECEncoderASet) {
@@ -311,7 +317,7 @@ HandleChanDEC_A() {
             _DECEncoderTicks += -1;
         }
     }
-#ifdef DEBUG
+#ifdef FOO
     if (_DECEncoderAPrev == _DECEncoderASet) {
         _DECMissedInterrupt += 1;
     }
