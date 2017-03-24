@@ -15,14 +15,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- *
- * Quadrature decoding based upon:
- * http://yameb.blogspot.com/2012/11/quadrature-encoders-in-arduino-done.html
  */
 
 #include <Arduino.h>
+#ifdef ENABLE_WIFI
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
+#endif
 #include "esp_dsc.h"
 #include "dsc.h"
 #include "utils.h"
@@ -32,8 +31,12 @@ void HandleChanRA_B();
 void HandleChanDEC_A();
 void HandleChanDEC_B();
 
+#ifdef ENABLE_WIFI
 WiFiServer server(TCP_PORT);
 WiFiClient serverClients[MAX_SRV_CLIENTS];
+void process_client(uint8_t c);
+#endif
+
 long RA_Res = RA_RESOLUTION;
 long DEC_Res = DEC_RESOLUTION;
 
@@ -65,6 +68,7 @@ setup() {
     pinMode(CHAN_DEC_A, INPUT_PULLUP);
     pinMode(CHAN_DEC_B, INPUT_PULLUP);
 
+#ifdef ENABLE_WIFI
     Serial.println("Starting up WiFi...");
 #ifdef AP_MODE
     WiFi.disconnect(true);
@@ -85,14 +89,15 @@ setup() {
         Serial.println("Connected!");
     }
 #endif
-
     server.begin();
     server.setNoDelay(true);
     Serial.print("Connect to ");
     Serial.print(WiFi.localIP());
     Serial.print(":");
     Serial.println(TCP_PORT);
-
+#else
+    Serial.println("WiFi disabled!");
+#endif // ENABLE_WIFI
     _RAEncoderASet = digitalRead(CHAN_RA_A);
     _RAEncoderBSet = digitalRead(CHAN_RA_B);
     _DECEncoderASet = digitalRead(CHAN_DEC_A);
@@ -104,6 +109,7 @@ setup() {
 }
 
 
+#ifdef ENABLE_WIFI
 /*
  * Process TCP client request on the given serverClient entry
  */
@@ -188,6 +194,8 @@ process_client(uint8_t c) {
             Serial.printf("Unknown command: %c\n", val);
     }
 }
+#endif // ENABLE_WIFI
+
 
 void 
 loop()
@@ -195,7 +203,7 @@ loop()
     static unsigned long last = 0;
     unsigned long now = millis();
     uint8_t c;
-
+#ifdef ENABLE_WIFI
     // look for new clients
     if (server.hasClient()) {
         for (c = 0; c < MAX_SRV_CLIENTS; c++) {
@@ -221,6 +229,8 @@ loop()
             }
         }
     }
+#endif // ENABLE_WIFI
+
 #ifdef DEBUG
     if ((now - last) >= SERIAL_PRINT_DELAY) {
         last = now;
@@ -247,7 +257,7 @@ loop()
 
 // Interrupt service routine for the RA/Az A channel
 void 
-HandleChanRA_A() {
+ICACHE_RAM_ATTR HandleChanRA_A() {
 //    _RAEncoderASet = digitalRead(CHAN_RA_A);
     _RAEncoderASet = !_RAEncoderASet;
 
@@ -264,7 +274,7 @@ HandleChanRA_A() {
             _RAEncoderTicks += -1;
         }
     }
-#ifdef FOO
+#if 0
     if (_RAEncoderAPrev == _RAEncoderASet) {
         _RAMissedInterrupt += 1;
     }
@@ -273,7 +283,7 @@ HandleChanRA_A() {
 }
 
 void
-HandleChanRA_B() {
+ICACHE_RAM_ATTR HandleChanRA_B() {
 //    _RAEncoderBSet = digitalRead(CHAN_RA_B);
     _RAEncoderBSet = !_RAEncoderBSet;
 
@@ -290,7 +300,7 @@ HandleChanRA_B() {
             _RAEncoderTicks += 1;
         }
     }
-#ifdef FOO
+#if 0
     if (_RAEncoderBPrev == _RAEncoderBSet) {
         _RAMissedInterrupt += 1;
     }
@@ -300,7 +310,7 @@ HandleChanRA_B() {
 
 // Interrupt service routine for the DEC/Az A channel
 void 
-HandleChanDEC_A() {
+ICACHE_RAM_ATTR HandleChanDEC_A() {
     // _DECEncoderASet = digitalRead(CHAN_DEC_A);
     _DECEncoderASet = !_DECEncoderASet;
 
@@ -317,7 +327,7 @@ HandleChanDEC_A() {
             _DECEncoderTicks += -1;
         }
     }
-#ifdef FOO
+#if 0
     if (_DECEncoderAPrev == _DECEncoderASet) {
         _DECMissedInterrupt += 1;
     }
@@ -326,7 +336,7 @@ HandleChanDEC_A() {
 }
 
 void
-HandleChanDEC_B() {
+ICACHE_RAM_ATTR HandleChanDEC_B() {
     _DECEncoderBSet = digitalRead(CHAN_DEC_B);
 
     if (_DECEncoderASet) {
