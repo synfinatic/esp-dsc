@@ -1,6 +1,8 @@
 #ifndef __ESP_DSC_H__
 #define __ESP_DSC_H__
 
+#include <Arduino.h>
+
 /* 
  * For security reasons, define your WIFI_SSID and WIFI_PASSWORD 
  * in config.h
@@ -23,7 +25,11 @@
 #define SERIAL_SPEED 115200
 #define SERIAL_PRINT_DELAY 1000
 
-
+#ifdef EXTERNAL_PULLUP
+#define ENCODER_INPUT INPUT
+#else
+#define ENCODER_INPUT INPUT_PULLUP
+#endif
 
 #define BUFF_LEN 10
 #define CLIENT_BUFF_LEN 36

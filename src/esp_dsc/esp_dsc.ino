@@ -18,18 +18,22 @@
  */
 
 #include <Arduino.h>
-#ifdef ENABLE_WIFI
-#include <ESP8266WiFi.h>
-#include <WiFiClient.h>
-#endif
 #include "esp_dsc.h"
 #include "dsc.h"
 #include "utils.h"
 
-void HandleChanRA_A();
-void HandleChanRA_B();
-void HandleChanDEC_A();
-void HandleChanDEC_B();
+#ifdef USE_ENCODER
+#define ENCODER_OPTIMIZE_INTERRUPTS
+#include <Encoder.h>
+Encoder EncoderRA(CHAN_RA_A, CHAN_RA_B);
+Encoder EncoderDEC(CHAN_DEC_B, CHAN_DEC_B);
+#endif
+
+#ifdef ENABLE_WIFI
+#include <ESP8266WiFi.h>
+#include <WiFiClient.h>
+#endif
+
 
 #ifdef ENABLE_WIFI
 WiFiServer server(TCP_PORT);
@@ -39,6 +43,12 @@ void process_client(uint8_t c);
 
 long RA_Res = RA_RESOLUTION;
 long DEC_Res = DEC_RESOLUTION;
+
+#ifndef USE_ENCODER
+void HandleChanRA_A();
+void HandleChanRA_B();
+void HandleChanDEC_A();
+void HandleChanDEC_B();
 
 volatile bool _RAEncoderASet;
 volatile bool _RAEncoderBSet;
@@ -54,19 +64,24 @@ volatile bool _DECEncoderAPrev;
 volatile bool _DECEncoderBPrev;
 volatile int _RAMissedInterrupt = 0;
 volatile int _DECMissedInterrupt = 0;
-#endif 
-
+#endif // DEBUG
+#endif // USE_ENCODER
 
 
 void
 setup() {
     uint8_t i = 0;
     Serial.begin(SERIAL_SPEED);
+#ifndef USE_ENCODER
+    pinMode(CHAN_RA_A, ENCODER_INPUT);
+    pinMode(CHAN_RA_B, ENCODER_INPUT);
+    pinMode(CHAN_DEC_A, ENCODER_INPUT);
+    pinMode(CHAN_DEC_B, ENCODER_INPUT);
+#endif
 
-    pinMode(CHAN_RA_A, INPUT_PULLUP);
-    pinMode(CHAN_RA_B, INPUT_PULLUP);
-    pinMode(CHAN_DEC_A, INPUT_PULLUP);
-    pinMode(CHAN_DEC_B, INPUT_PULLUP);
+#ifdef DEBUG
+    pinMode(0, INPUT_PULLUP);
+#endif
 
 #ifdef ENABLE_WIFI
     Serial.println("Starting up WiFi...");
@@ -76,28 +91,20 @@ setup() {
     WiFi.softAP(WIFI_SSID, WIFI_PASSWORD);
 #else
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-    while (WiFi.status() != WL_CONNECTED && i++ < MAX_AP_RETRIES) {
+    while (WiFi.status() != WL_CONNECTED) {
         Serial.print("Waiting for WiFi status to go live...\n");
         delay(500);
     }
-    if (i > MAX_AP_RETRIES) {
-        Serial.print("Could not connect to ");
-        Serial.println(WIFI_AP);
-        while(1)
-            delay(500);
-    } else {
-        Serial.println("Connected!");
-    }
+    Serial.printf("Connected to %s!\n", WIFI_AP);
 #endif
     server.begin();
     server.setNoDelay(true);
-    Serial.print("Connect to ");
-    Serial.print(WiFi.localIP());
-    Serial.print(":");
-    Serial.println(TCP_PORT);
+    Serial.printf("Connect to %s:%d\n", WiFi.localIP(), TCP_PORT);
 #else
     Serial.println("WiFi disabled!");
 #endif // ENABLE_WIFI
+
+#ifndef USE_ENCODER
     _RAEncoderASet = digitalRead(CHAN_RA_A);
     _RAEncoderBSet = digitalRead(CHAN_RA_B);
     _DECEncoderASet = digitalRead(CHAN_DEC_A);
@@ -106,6 +113,7 @@ setup() {
     attachInterrupt(digitalPinToInterrupt(CHAN_RA_B), HandleChanRA_B, CHANGE);
     attachInterrupt(digitalPinToInterrupt(CHAN_DEC_A), HandleChanDEC_A, CHANGE);
     attachInterrupt(digitalPinToInterrupt(CHAN_DEC_B), HandleChanDEC_B, CHANGE);
+#endif
 }
 
 
@@ -118,16 +126,22 @@ process_client(uint8_t c) {
     char buff[CLIENT_BUFF_LEN];
     char *value;
     char val = serverClients[c].read();
-    long ra, dec;
+    long ra_value, dec_value;;
     int i, j;
     switch (val) {
         // get encoder values
         case 'Q':
-            value = EncoderValue(
-                    ngc_convert_encoder_value(_RAEncoderTicks, RA_Res), true);
+#ifdef USE_ENCODER
+            ra_value = EncoderRA.read();
+            dec_value = EncoderDEC.read();
+#else
+            ra_value = _RAEncoderTicks;
+            dec_value = _DECEncoderTicks;
+#endif
+            value = EncoderValue(ngc_convert_encoder_value(ra_value, RA_Res), true);
             sprintf(buff, "%s\t", value);
             value = EncoderValue(
-                    ngc_convert_encoder_value(_DECEncoderTicks, DEC_Res), true);
+                    ngc_convert_encoder_value(dec_value, DEC_Res), true);
             serverClients[c].printf("%s%s\r\n", buff, value);
             break;
         case 'R':
@@ -203,6 +217,8 @@ loop()
     static unsigned long last = 0;
     unsigned long now = millis();
     uint8_t c;
+    long dec_value, ra_value;
+    char buffer[50], ra_f[10], dec_f[10];
 #ifdef ENABLE_WIFI
     // look for new clients
     if (server.hasClient()) {
@@ -234,27 +250,48 @@ loop()
 #ifdef DEBUG
     if ((now - last) >= SERIAL_PRINT_DELAY) {
         last = now;
-
-        Serial.printf("RA Encoder Ticks: %ld  Revolutions: ",
-            ngc_convert_encoder_value(_RAEncoderTicks, RA_Res));
-        Serial.print(_RAEncoderTicks/(float)RA_Res);
-        Serial.printf("\nDEC Encoder Ticks: %ld  Revolutions: ",
-            ngc_convert_encoder_value(_DECEncoderTicks, DEC_Res));
-        Serial.print(_DECEncoderTicks/(float)DEC_Res);
-        Serial.print("\n");
-
+        if (LOW == digitalRead(0)) {
+            // zero out encoder values for testing
+            noInterrupts();
+#ifdef USE_ENCODER
+            EncoderRA.write(0);
+            EncoderDEC.write(0);
+#else
+            _RAEncoderTicks = 0;
+            _DECEncoderTicks = 0;
+#endif // USE_ENCODER
+            interrupts();
+        }
+#ifdef USE_ENCODER
+        ra_value = EncoderRA.read();
+        dec_value = EncoderDEC.read();
+#else
+        ra_value = _RAEncoderTicks;
+        dec_value = _DECEncoderTicks;
+#endif
+        snprintf(buffer, 100,
+                "RA Ticks: %ld\tRevs: %s\nDec Ticks: %ld\tRevs: %s\n",
+                ngc_convert_encoder_value(ra_value, RA_Res),
+                ftoa(ra_f, ra_value/(float)RA_Res, 3),
+                ngc_convert_encoder_value(dec_value, DEC_Res),
+                ftoa(dec_f, dec_value/(float)DEC_Res, 3));
+        Serial.print(buffer);
+#ifndef USE_ENCODER
         if (_DECMissedInterrupt > 0) {
             Serial.printf("Missed %d interrupts on DEC\n", _DECMissedInterrupt);
             _DECMissedInterrupt = 0;
         }
         if (_RAMissedInterrupt > 0) {
-            Serial.printf("Missed %d interrupts on DEC\n", _RAMissedInterrupt);
+            Serial.printf("Missed %d interrupts on RA\n", _RAMissedInterrupt);
             _RAMissedInterrupt = 0;
         }
+#endif
     }
 #endif
+    delay(25); // service WiFiClient
 }
 
+#ifndef USE_ENCODER
 // Interrupt service routine for the RA/Az A channel
 void 
 ICACHE_RAM_ATTR HandleChanRA_A() {
@@ -359,3 +396,4 @@ ICACHE_RAM_ATTR HandleChanDEC_B() {
     _DECEncoderBPrev = _DECEncoderBSet;
 #endif
 }
+#endif // USE_ENCODER

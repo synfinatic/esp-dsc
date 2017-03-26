@@ -6,8 +6,33 @@
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
-// #define DEBUG 1 // Enable for debugging via serial
-// #define AP_MODE 1 // Comment out this to connect to an existing WiFi network
+/*
+ * Enable for debugging via the onboard Serial port
+ */
+// #define DEBUG
+
+/*
+ * Enable WiFi stack support
+ */
+// #define ENABLE_WIFI
+
+/*
+ * Start a new WiFi network instead of connecting to an existing one
+ */
+// #define AP_MODE
+
+/*
+ * Use Paul Stoffregen's Encoder library
+ */
+// #define USE_ENCODER
+
+/*
+ * Use external pullup resistors on encoder pins.  Note this only works
+ * if you have not enabled the Encoder library.  You must manually edit the
+ * Encoder library if you're using that
+ */
+// #define EXTERNAL_PULLUP
+
 
 /*
  * Resolution of encoders after quadrature decoding
