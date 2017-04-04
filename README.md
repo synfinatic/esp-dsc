@@ -15,10 +15,50 @@ More information about this project is available [on my website](https://synfin.
 ## Status
 
  * Design PCB (Initial beta design is complete)
- * Port over the TeensyDSC code to the ESP-12 (WIP)
+ * Port over the TeensyDSC code to the ESP-12 (80% done)
  * Verify that the ESP-12E is capable of handeling 2.5k encoders (complete!)
- * Verify that the ESP-12E is capable of handeling 10k encoders (TBD)
+ * Verify that the ESP-12E is capable of handeling 10k encoders (failed!)
+ * Redesign PCB for better performance  (TBD)
+ * Update code based on new design (TBD)
  * Create the necessary STL files to 3D print an enclosure for the board (TBD)
+
+## Performance
+
+So a quick word about performance.  There are a number of people who claim that 
+the ESP-12E has enough horsepower for two 2500CPR (10K after quadurature decoding) 
+encoders.  One person told me they saw some errors, but they were small and 
+likely caused by their mount.  This didn't seem very scientific to me, so I ran 
+some tests.
+
+My methodolgy is pretty simple.  I connected two ESP12E's to the same set of 
+encoders.  Both ESP12E's used the same code and a custom modified version of 
+[Paul Stoffgren's Encoder library](https://github.com/PaulStoffregen/Encoder) 
+which has support for the ESP8266.  I also glued a toothpick to each encoder 
+shaft to make it easier to rotate with my finger.  The test would be simple: If
+both ESP12E's reported the same values, then I would say it was accurate.  But 
+if the results were different, then it wasn't accurate.
+
+I found that I could rotate a single 2,500CPR as fast as I possibly could 
+without any error.  I could rotate a single 10,000CPR (40K after quadurature 
+decoding) almost as fast without causing any error.
+
+However, once I introduced a second encoder, I started seeing errors.  At about 
+1 rotation/second, the 2500CPR encoders started to show some errors.  Two 
+10,000CPR encoders had significant errors.  I also noticed that "flicking" the 
+encoder causing it to quickly accellerate for a short duration (approx 1/4 
+to 1/2 rotation) would cause significant errors even with the 2500CPR encoders.
+
+This seems to indicate to me that a person who is careful to not quickly move 
+their scope manually should be able to use two 2500CPR encoders without 
+introducing enough error that would cause problems.  If you're using a GoTo
+mount, you should be very safe since those don't rotate very quickly (unless
+you disengage the clutch and rotate it quickly by hand!).
+
+However, even my 12" scope is easy to move quickly for short distances and 
+don't feel that it would be reliably accurate using 10,000CPR encoders.  The
+result is I don't feel my initial PCB design is good enough with a single ESP12E.
+I'm currently researching other solutions which could be implemented as cheaply
+and reliably as possible.
 
 ## Basic Features
 I wanted to do my own digital setting circles (DSC) for my Apertura AD12.
