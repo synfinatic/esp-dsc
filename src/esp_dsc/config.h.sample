@@ -22,19 +22,6 @@
 // #define AP_MODE
 
 /*
- * Use Paul Stoffregen's Encoder library
- */
-// #define USE_ENCODER
-
-/*
- * Use external pullup resistors on encoder pins.  Note this only works
- * if you have not enabled the Encoder library.  You must manually edit the
- * Encoder library if you're using that
- */
-// #define EXTERNAL_PULLUP
-
-
-/*
  * Resolution of encoders after quadrature decoding
  */
 #define RA_RESOLUTION 10000
