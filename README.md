@@ -16,8 +16,8 @@ More information about this project is available [on my website](https://synfin.
 
  * Design PCB (complete!)
  * Port over the TeensyDSC code to the ESP-12 (complete!)
- * Verify that the ESP-12E is capable of handeling 2.5k encoders (complete!)
- * Verify that the ESP-12E is capable of handeling 10k encoders (failed!)
+ * Verify that the ESP-12E is capable of handeling 2.5K PPR/10K count encoders (complete!)
+ * Verify that the ESP-12E is capable of handeling 10K PPR/40K count encoders (failed!)
  * Create the necessary STL files to 3D print an enclosure for the board (complete!)
 
 ## v2.0 Status 
