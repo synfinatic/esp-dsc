@@ -12,15 +12,18 @@ the appropriate enclosure for the board.
 
 More information about this project is available [on my website](https://synfin.net/sock_stream/tag/esp-dsc).
 
-## Status
+## v1.0 Status
 
- * Design PCB (Initial beta design is complete)
- * Port over the TeensyDSC code to the ESP-12 (80% done)
+ * Design PCB (complete!)
+ * Port over the TeensyDSC code to the ESP-12 (complete!)
  * Verify that the ESP-12E is capable of handeling 2.5k encoders (complete!)
  * Verify that the ESP-12E is capable of handeling 10k encoders (failed!)
+ * Create the necessary STL files to 3D print an enclosure for the board (complete!)
+
+## v2.0 Status 
  * Redesign PCB for better performance  (TBD)
  * Update code based on new design (TBD)
- * Create the necessary STL files to 3D print an enclosure for the board (TBD)
+ * Verify that the ESP-12E is capable of handeling 10k encoders (TBD)
 
 ## Performance
 
