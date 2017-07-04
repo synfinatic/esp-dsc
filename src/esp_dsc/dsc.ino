@@ -27,8 +27,8 @@
  * So depending on the resolution, it either returns a 
  * uint16_t value or int16_t value.
  *
- * So if you have a resolution < 2^15, then the range is:
- * -resolution to (resolution-1)
+ * So if you have an abs(resolution) < 2^15, then the range is:
+ * -resolution/2 to (resolution/2-1)
  *
  * If your resolution is larger, then the range is:
  * 0 to 2^16-1
@@ -36,31 +36,62 @@
  * It's so far undocumented how encoders mounted backwards
  * with a negative resolution should be handled for the
  * latter situation.  I decided to do the semi-obvious thing
- * of wrapping between 0-(Resolution - 1)
+ * of counting backwards.
  */
-
 int32_t
 ngc_convert_encoder_value(int32_t encoder, long resolution) {
-    int32_t ret, half_res;
-    half_res = resolution / 2;
+    int32_t ret = 0;
+    static int32_t half_res = resolution / 2;
 
     // Different math if resolution can be stored in int16_t
     if ((resolution < INT16_MAX) && (resolution >= INT16_MIN)) {
-        ret = encoder % resolution;
-        if (ret > (half_res-1)) {
-            ret = ret - (half_res - 1) - half_res;
-        } else if (ret < -half_res) {
-            ret = ret + (half_res * 2);
+        if (resolution >= 0) {
+            encoder = encoder % resolution;
+            if (encoder >= 0) {
+                if (encoder <= (half_res -1)) {
+                    ret = encoder;
+                } else {
+                    ret = -half_res - (half_res - encoder);
+                }
+            } else {
+                // encoder is negative
+                if (abs(encoder) <= half_res) {
+                   ret = encoder;
+                } else {
+                    ret = half_res + (half_res + encoder);
+                }
+            }
+        } else {
+            encoder = encoder % abs(resolution);
+            // resolution is negative
+            if (encoder >= 0) {
+                if (encoder <= abs(half_res)) {
+                    ret = -encoder;
+                } else {
+                    ret = abs(half_res) - (encoder % abs(half_res));
+                }
+            } else {
+                if (abs(encoder) < abs(half_res)) {
+                    ret = -encoder;
+                } else {
+                    ret = half_res + (half_res - encoder);
+                }
+            }
         }
     } else {
-	// use UNIT_MAX resolution
-        ret = encoder % abs(resolution);
-        // if encoder value is out of range of the resolution,
-        // then wrap it
-        if ((ret < 0) && (resolution > 0)) {
-            ret = resolution + ret;
-        } else if ((ret > 0) && (resolution < 0)) { 
-            ret = resolution - ret;
+        if (resolution > 0) {
+            if (encoder >= 0) {
+                ret = encoder % resolution;
+            } else {
+                ret = (resolution + (encoder % resolution)) % resolution;
+            }
+        } else {
+            // resolution is negative
+            if (encoder >= 0) {
+                ret = (-resolution - (encoder % resolution)) % -resolution;
+            } else {
+                ret = ((encoder * -1) % resolution) % resolution;
+            }
         }
     }
     return ret;
