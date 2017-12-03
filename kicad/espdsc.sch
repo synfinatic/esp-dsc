@@ -1,35 +1,5 @@
 EESchema Schematic File Version 2
 LIBS:power
-LIBS:device
-LIBS:transistors
-LIBS:conn
-LIBS:linear
-LIBS:regul
-LIBS:74xx
-LIBS:cmos4000
-LIBS:adc-dac
-LIBS:memory
-LIBS:microcontrollers
-LIBS:dsp
-LIBS:microchip
-LIBS:analog_switches
-LIBS:motorola
-LIBS:texas
-LIBS:intel
-LIBS:audio
-LIBS:interface
-LIBS:digital-audio
-LIBS:philips
-LIBS:display
-LIBS:siliconi
-LIBS:opto
-LIBS:atmel
-LIBS:contrib
-LIBS:ftdi
-LIBS:Power_Management
-LIBS:switches
-LIBS:synfinatic
-LIBS:ESP8266
 LIBS:espdsc-cache
 EELAYER 25 0
 EELAYER END
@@ -37,8 +7,8 @@ $Descr USLetter 11000 8500
 encoding utf-8
 Sheet 1 1
 Title ""
-Date "2017-12-02"
-Rev "v1.1"
+Date "2017-12-03"
+Rev "v1.2"
 Comp "Aaron Turner <synfinatic@gmail.com>"
 Comment1 "https://synfin.net/espdsc"
 Comment2 ""
@@ -51,7 +21,7 @@ U 1 1 58B244F4
 P 4700 2900
 F 0 "U1" H 4700 2800 50  0000 C CNN
 F 1 "ESP-12E" H 4700 3000 50  0000 C CNN
-F 2 "ESP8266:ESP-12E" H 4700 2900 50  0001 C CNN
+F 2 "synfinatic:ESP-12E-SMD" H 4700 2900 50  0001 C CNN
 F 3 "" H 4700 2900 50  0001 C CNN
 	1    4700 2900
 	1    0    0    -1  
