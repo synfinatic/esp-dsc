@@ -12,13 +12,14 @@ the appropriate enclosure for the board.
 
 More information about this project is available [on my website](https://synfin.net/sock_stream/tag/esp-dsc).
 
-## v1.0 Status
+## v1.2 Status
 
  * Design PCB (complete!)
  * Port over the TeensyDSC code to the ESP-12 (complete!)
  * Verify that the ESP-12E is capable of handeling 2.5K PPR/10K count encoders (complete!)
  * Verify that the ESP-12E is capable of handeling 10K PPR/40K count encoders (failed!)
  * Create the necessary STL files to 3D print an enclosure for the board (complete!)
+ * Major board change between v1.0 and v1.1- different pins used!
 
 ## v2.0 Status 
  * Redesign PCB for better performance  (TBD)
