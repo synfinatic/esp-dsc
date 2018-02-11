@@ -127,3 +127,4 @@ There are a bunch of similar projects to ESP-DSC which you should be aware of:
  * [mdw123/arduino-dsc](https://github.com/mdw123/arduino-dsc)
  * [Arduino Bluetooth DSC](http://orlygoingthirty.blogspot.com/2012/01/arduino-bluetooth-digital-setting.html)
  * [Mike Fulbright's Arduino DSC](http://msfastro.net/articles/arduinodsc/)
+ * [Gigi's DSC w/ Magnetic Encoders](https://sites.google.com/site/gigimysite/home/astro/dsc-ekbox)
