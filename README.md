@@ -83,7 +83,7 @@ The main goals were:
  * Powered via USB connection
  * Using industry standard RJ45 connection to encoders
  * Open source software & PCB design (GPLv3)
-    * PCB Design done in [KiCad](http://www.kicad-pcb.org)
+    * PCB Design done in [KiCad](http://www.kicad.org)
     * PCB's available from [OshPark](http://www.oshpark.com)
  * Inexpensive!  All the components should be available for < $40.
 
